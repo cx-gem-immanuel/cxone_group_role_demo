@@ -68,6 +68,16 @@ class CheckmarxClient:
             return None
 
     def delete_group(self, group_id):
+        """
+        Delete a group by its ID.
+
+        Args:
+            group_id (str): The unique identifier of the group to delete.
+
+        Returns:
+            bool: True if the group was deleted successfully (HTTP 204 status code),
+                  False otherwise.
+        """
         url = f'{self.iam_host}/auth/admin/realms/{self.tenant}/groups/{group_id}'
         headers = {
             'Authorization':
@@ -83,6 +93,21 @@ class CheckmarxClient:
             return False
         
     def get_groups(self, group_name=None):
+        """
+        Retrieve groups from the IAM server.
+        
+        Fetches a list of groups from the configured IAM host for the current tenant.
+        Optionally filters the results by group name.
+        
+        Args:
+            group_name (str, optional): The name of a specific group to retrieve. 
+                                        If provided, only groups matching this name 
+                                        will be returned. Defaults to None.
+        
+        Returns:
+            list: A list of group dictionaries if the request is successful (status code 200).
+                  Returns None if the request fails.
+        """
         url = f'{self.iam_host}/auth/admin/realms/{self.tenant}/groups'
         headers = {
             'Authorization': f'Bearer {self.get_bearer_token()}',
@@ -99,15 +124,10 @@ class CheckmarxClient:
             return None
 
     def create_group(self, group_name):
-        # https://{{IAM_HOST}}/auth/admin/realms/{{TENANT}}/groups
         """
-        Creates a new group in the IAM system with the specified name and associated role IDs.
-
-        Args:
-            group_name (str): The name of the group to be created.
-        Returns:
-            dict: The response from the server if the group is created successfully.
-            None: If the request fails, prints the error and returns None.
+        Creates a new group in the IAM system with the specified name.
+            bool: True if the group is created successfully (HTTP 201 response).
+                  False if the request fails.
         """
         url = f'{self.iam_host}/auth/admin/realms/{self.tenant}/groups'
         headers = { 
@@ -127,6 +147,20 @@ class CheckmarxClient:
             return False
         
     def assign_roles_to_group(self, group_id, client_id, roles):
+        """
+        Assign roles to a group in the IAM system.
+        This method sends a POST request to assign the specified roles to a group
+        for a particular client in the IAM realm.
+        Args:
+            group_id (str): The unique identifier of the group to assign roles to.
+            client_id (str): The unique identifier of the client for which roles are being assigned.
+            roles (list): A list of role dictionaries, each containing:
+                - id (str): The unique identifier of the role.
+                - name (str): The name of the role.
+        Returns:
+            bool: True if roles were successfully assigned (HTTP 204 response),
+                  False otherwise.
+        """
 
         url = f'{self.iam_host}/auth/admin/realms/{self.tenant}/groups/{group_id}/role-mappings/clients/{client_id}'
         headers = {
@@ -155,6 +189,17 @@ class CheckmarxClient:
             return False
 
     def get_roles(self, client_id):
+        """
+        Retrieves all roles associated with a specific client in the IAM realm.
+        
+        Args:
+            client_id (str): The unique identifier of the client for which to retrieve roles.
+        
+        Returns:
+            dict or None: A dictionary containing the list of roles for the client if the request
+                          is successful (HTTP 200), or None if the request fails. The response
+                          contains role details from the IAM server.
+        """
         # GET https://{{IAM_HOST}}/auth/admin/realms/{{TENANT}}/clients/{{client_id}}/roles
         url = f'{self.iam_host}/auth/admin/realms/{self.tenant}/clients/{client_id}/roles'
         headers = {
@@ -169,6 +214,16 @@ class CheckmarxClient:
             return None
     
     def get_role_id(self, client_id, role_name):
+        """
+        Retrieve the ID of a role by its name for a given client.
+
+        Args:
+            client_id: The identifier of the client.
+            role_name (str): The name of the role to search for.
+
+        Returns:
+            str or None: The ID of the role if found, otherwise None.
+        """
         roles = self.get_roles(client_id)
         for role in roles:
             if role['name'] == role_name:
@@ -176,6 +231,15 @@ class CheckmarxClient:
         return None 
 
     def get_client_id(self, client_name):
+        """
+        Retrieve the internal ID of a client by their identifier string.
+        
+        Args:
+            client_name (str): The client ID to search for.
+        
+        Returns:
+            str or None: The internal ID of the client if found, None otherwise.        
+        """
         clients = self.get_clients()
         for client in clients:
             if client['clientId'] == client_name:
@@ -183,6 +247,16 @@ class CheckmarxClient:
         return None
     
     def get_clients(self):
+        """
+        Retrieve a list of clients from the IAM realm.
+        
+        Sends an authenticated GET request to the IAM admin API endpoint to fetch
+        all clients configured in the current tenant's realm.
+        
+        Returns:
+            list[dict] | None: A list of client dictionaries containing client configuration details
+                if the request is successful (HTTP 200), otherwise None if the request fails.        
+        """
         # https://{{cx_iam_host}}/auth/admin/realms/{{cx_tenant}}/clients
         url = f'{self.iam_host}/auth/admin/realms/{self.tenant}/clients'
         headers = {
